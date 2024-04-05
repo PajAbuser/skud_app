@@ -6,8 +6,8 @@ class SKUD_Service():
     
     skuds : dict[str, SKUD] = {}
     
-    def __init__(self):
-        self.skuds.update({'0':SKUD({},{})})   
+    def __init__(self, skuds: dict = {'0':SKUD({},{})}):
+        self.skuds.update(skuds)   
             
     def create(self) -> int:
         self.skuds.update({str(len(self.skuds)):SKUD({},{})})

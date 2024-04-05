@@ -20,3 +20,6 @@ class doorSerializer(serializers.Serializer):
     
     def create(self) -> Door:
         return Door(self.data)
+
+class SKUDSerializer(serializers.Serializer):
+    skuds = serializers.DictField
