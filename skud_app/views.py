@@ -13,11 +13,13 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 skudServ = SKUD_Service()
 
 @extend_schema_view(
-list=extend_schema(summary='Applications list', parameters=[     ], auth=False), # serializer tooda
-create=extend_schema(summary='New applicationn',
-request=None), # i tooda
-get_one=extend_schema(summary='One application', description='Allows to get \
-one application by it\'s ID or returns error')
+# list=extend_schema(summary='Applications list', parameters=[     ], auth=False), # serializer tooda
+
+add_pass=extend_schema(summary='Add new pass to SKUD', request=pasSerializer),
+add_door=extend_schema(summary='Add new door to SKUD', request=doorSerializer),
+add_door_pass=extend_schema(summary='Add pass to door & SKUD if none', request=doorSerializer),
+
+#get_one=extend_schema(summary='One application', description='Allows to get one application by it\'s ID or returns error')
 )
 class SKUDViewSet(ViewSet):
     
