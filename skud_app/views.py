@@ -18,10 +18,7 @@ import functools
 def log(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # req: WSGIRequest = make_middleware_aware(args[1])
-        # req1: HttpRequest
         req  = args[1]
-        # Записать в файл информацию о вызове метода
         with open('method_calls.log', 'a') as f:
             f.write(f"<{datetime.datetime.now()}> Вызван метод {'{:>16}'.format(func.__name__)} с аргументами {repr(args)} и ключевыми словами {repr(kwargs)}")
             if type(req) == request.Request:
@@ -60,7 +57,7 @@ class SKUDViewSet(ViewSet):
             print("validated" if serializer.is_valid() else "non-valid", f"pass_id={doorDict.get('UUID')} pass.data")
             pas = serializer.create()
             self.skudServ.add(pas)
-            return HttpResponse(content=f"sozdan pass: {self.skudServ.skuds.get(data.get('skud_id')).passes.get(pas.id)}")
+            return HttpResponse(content=f"sozdan pass: {self.skudServ.skud.passes.get(pas.id)}")
         elif type(request) == dict:
             serializer = pasSerializer(data=request)
             print("validated" if serializer.is_valid() else "non-valid", f"pass_id={request.get('UUID')} pass.data")
@@ -70,13 +67,13 @@ class SKUDViewSet(ViewSet):
     @log
     @action(detail=True, methods=['get'], url_path='passes/<int:id>')
     def repr_pass(self, request, id):
-        if self.skudServ.skuds['0'].passes.keys():
-            return HttpResponse(content=f"{list(self.skudServ.skuds['0'].passes.keys())[id]}")
-        else: return HttpResponse(content="{}")
+        if len(self.skudServ.passes_n) > id:
+            return HttpResponse(content=f"{self.skudServ.skud.passes.get(self.skudServ.passes_n[id])}")
+        else: return HttpResponse(content="No such pass")
     @log
     @action(detail=False, methods=['get'], url_path='passes/')
-    def repr_passes(self):
-        return HttpResponse(content=f"{self.skudServ.skuds['0'].passes}")
+    def repr_passes(self, request):
+        return HttpResponse(content=f"{self.skudServ.skud.passes}")
         
     @log
     @action(detail=True, methods=['post'])
@@ -95,36 +92,34 @@ class SKUDViewSet(ViewSet):
     @log
     @action(detail=True, methods=['get'], url_path='doors/<int:id>')
     def repr_door(self, request, id):
-        if self.skudServ.skuds['0'].doors.keys():
-            return HttpResponse(content=f"{list(self.skudServ.skuds['0'].doors.keys())[id]}")
-        else: return HttpResponse(content="{}")
+        if len(self.skudServ.doors_n) > id:
+            return HttpResponse(content=f"{self.skudServ.skud.doors.get(self.skudServ.doors_n[id])}")
+        else: return HttpResponse(content="No such pass")
     
     @log
     @action(detail=False, methods=['get'], url_path='doors/')
-    def repr_doors(self):
-        return HttpResponse(content=f"{self.skudServ.skuds['0'].doors}")
+    def repr_doors(self, request):
+        return HttpResponse(content=f"{self.skudServ.skud.doors}")
 
     @log
     @action(detail=True, methods=['post'])
     def add_door_pass(self, request, id:UUID):
         data: dict = json.loads(request.body)
-        skud_id = data.get('skud_id')
-        door1 = self.skudServ.skuds.get(skud_id).doors.get(id)
+        door1 = self.skudServ.skud.doors.get(id)
         if door1 == None:
             self.add_door(request)
-        pass1 = self.skudServ.skuds.get(skud_id).passes.get(data.get('Pass').get('UUID'))
+        pass1 = self.skudServ.skud.passes.get(data.get('Pass').get('UUID'))
         if pass1 == None:
             self.add_pass(request)
-        self.skudServ.reg(door1,pass1, skud_id)
+        self.skudServ.reg(door1,pass1)
         return HttpResponse(content=f"pass {pass1} is \
-            added to door {self.skudServ.skuds.get(skud_id).doors.get(data.get('Door').get('UUID'))}")
+            added to door {self.skudServ.skud.doors.get(data.get('Door').get('UUID'))}")
     
     @log
     @action(detail=True, methods=['delete'])
     def remove_pass(self, request):
         data: dict = json.loads(request.body)
-        skud_id = data.get('skud_id')
-        self.skudServ.rem(data.get("Door"), data.get("Pass"), skud_id=skud_id)
+        self.skudServ.rem(data.get("Door"), data.get("Pass"))
         
     def _add(self, request):
         data: dict = json.loads(request.body)
