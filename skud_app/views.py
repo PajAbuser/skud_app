@@ -7,10 +7,18 @@ from skud_app.serializers import *
 from rest_framework.viewsets import ViewSet
 from skud_app.services.SKUD_Service import SKUD_Service
 from rest_framework.parsers import JSONParser
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
 skudServ = SKUD_Service()
 
+@extend_schema_view(
+list=extend_schema(summary='Applications list', parameters=[     ], auth=False), # serializer tooda
+create=extend_schema(summary='New applicationn',
+request=None), # i tooda
+get_one=extend_schema(summary='One application', description='Allows to get \
+one application by it\'s ID or returns error')
+)
 class SKUDViewSet(ViewSet):
     
     def create_SKUD(self, request):

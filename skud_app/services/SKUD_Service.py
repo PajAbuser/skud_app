@@ -1,6 +1,6 @@
 from django.http import HttpResponse, JsonResponse, FileResponse
 from skud_app.models import *
-
+from skud_app.serializers import pasSerializer, doorSerializer
 
 class SKUD_Service():
     
