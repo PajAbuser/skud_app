@@ -48,42 +48,33 @@ class SKUD_Service():
         if type(door1) == Door and type(pas1) == Pas:
             return bool(door1.allowed.get(pas1))
         elif type(door1) == str and type(pas1) == str:
-            for door in self.skud.doors:
-                if door.id == door1:
-                    for pas in self.skud.passes:
-                        if pas1 == pas.id:
-                            return bool(door.allowed.get(pas.id))
-        return False
+            return self.skud.doors.get(door1).allowed.get(pas1.id)
                     
     def unlock(self, door1):   #Открыть дверь
         if type(door1) == Door:
             door1.status = False
         elif type(door1) == str:
-            for door in self.skud.doors:
-                if door.id == door1:
-                    self.skud.unlock(door)
+            self.skud.doors.get(door1).status = False
 
     def lock(self, door1):   #Закрыть дверь
-        if type(door1) == Door:    
-            door1.status = True
+        if type(door1) == Door:
+            door1.status = False
         elif type(door1) == str:
-            for door in self.skud.doors:
-                if door.id == door1:
-                    self.skud.lock(door)
+            self.skud.doors.get(door1).status = False
 
     def check(self, door1, pas1):   #Поменять состояние двери, если пропуск подходит
         if type(door1) == Door and type(pas1) == Pas:      
-            if self.skud.valid(door1, pas1):
+            if self.valid(door1, pas1):
                 if door1.status:
-                    self.skud.unlock(door1)
-            else: self.skud.lock(door1)
+                    self.unlock(door1)
+            else: self.lock(door1)
         elif type(door1) == str and type(pas1) == str:
-            if self.skud.valid(door1, pas1):
-                for door in self.skud.doors:
-                    if door.id == door1:
-                        if door.status:
-                            self.skud.unlock(door)
-                        else: self.skud.lock(door)
+            door1 = self.skud.doors.get(door1)
+            pas1  = self.skud.passes.get(pas1)
+            if self.valid(door1, pas1):
+                if door1.status:
+                    self.unlock(door1)
+            else: self.lock(door1)
 
     def logs(self):
         f = open("filename.txt")

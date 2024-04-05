@@ -103,8 +103,8 @@ class SKUDViewSet(ViewSet):
         return HttpResponse(content=f"{self.skudServ.skud.doors}")
 
     @log
-    @action(detail=True, methods=['post'])
-    def add_door_pass(self, request, id:UUID):
+    @action(detail=True, methods=['post'], url_path='doors/<int:id>/passes')
+    def add_door_pass(self, request, id):
         data: dict = json.loads(request.body)
         door1 = self.skudServ.skud.doors.get(id)
         if door1 == None:
@@ -117,10 +117,43 @@ class SKUDViewSet(ViewSet):
             added to door {self.skudServ.skud.doors.get(data.get('Door').get('UUID'))}")
     
     @log
-    @action(detail=True, methods=['delete'])
-    def remove_pass(self, request):
+    @action(detail=True, methods=['delete'], url_path='doors/<int:id>/passes')
+    def remove_passes(self, request):
         data: dict = json.loads(request.body)
-        self.skudServ.rem(data.get("Door"), data.get("Pass"))
+        door = self.skudServ.skud.doors.get(data.get("Door").get('UUID'))
+        for pas in data.get("Passes"):
+            self.skudServ.rem(door, pas)
+        self.repr_door(door)
+            
+    @log
+    @action(detail=True, methods=['delete'], url_path='doors/<int:door_id>/passes/<int:pass_id>')
+    def remove_pass(self, door_id: int, pass_id: int):
+        self.skudServ.skud.doors.get(self.skudServ.doors_n[door_id]).allowed.popitem(self.skudServ.skud.passes.get(self.skudServ.passes_n[pass_id]))
+        
+    @log
+    @action(detail=True, methods=['post'], url_path='check/')
+    def check1(self, request):
+        data: dict = json.loads(request.body)
+        door1 = self.skudServ.skud.doors.get(data.get("Door").get('UUID'))
+        if door1 == None:
+            self.add_door(request)
+        pass1 = self.skudServ.skud.passes.get(data.get('Pass').get('UUID'))
+        if pass1 == None:
+            self.add_pass(request)
+        self.skudServ.check(door1,pass1)
+        return HttpResponse(content=f"pass {pass1} is valid to door {door1}")
+        
+    @log
+    @action(detail=True, methods=['get'], url_path='check/<int:door_id>/<int:pass_id>')
+    def check2(self, door_id:int, pass_id:int):
+        data: dict = json.loads(request.body)
+        door1 = self.skudServ.doors_n[door_id]
+        pass1 = self.skudServ.passes_n[pass_id]
+        self.skudServ.check(door1,pass1)
+        return HttpResponse(content=f"pass {pass1} is valid to door {door1}")
+        
+        
+        
         
 
 @extend_schema_view(
