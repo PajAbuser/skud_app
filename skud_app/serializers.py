@@ -22,4 +22,11 @@ class doorSerializer(serializers.Serializer):
         return Door(self.data)
 
 class SKUDSerializer(serializers.Serializer):
-    skuds = serializers.DictField
+    history = serializers.FileField()
+    passes  = serializers.DictField()
+    doors   = serializers.DictField()
+    
+class OperationSerializer(serializers.Serializer):
+    id     = serializers.UUIDField()
+    done   = serializers.BooleanField()
+    result = serializers.JSONField(default={})

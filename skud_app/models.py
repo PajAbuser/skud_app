@@ -55,11 +55,9 @@ class Door:
                             ", allowed passes: \n" + '{:>30}'.format(str(self.allowed)) + "}"
 
 
-
-
 class SKUD:
 
-    history: dict[str, object] = {}
+    history: __file__
     passes:  dict[str, Pas] = {}
     doors:   dict[str, Door] = {}
     
@@ -69,3 +67,13 @@ class SKUD:
 
     def __repr__(self) -> str:
         return f"passes: {self.passes}, doors: {self.doors}"
+    
+class Operation:
+    
+    id:     UUID
+    done:   bool
+    
+    def __init__(self, id: UUID, done: bool = False, result = None) -> None:
+        self.id     = id
+        self.done   = done
+        self.result = result

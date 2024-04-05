@@ -1,13 +1,12 @@
-from django.http import HttpResponse, JsonResponse, FileResponse
+from django.http import HttpResponse
 from skud_app.models import *
-from skud_app.serializers import pasSerializer, doorSerializer
 
 class SKUD_Service():
     
     skud : SKUD = SKUD({},{})
     
-    passes_n = []
-    doors_n  = []
+    passes_n : Pas  = []
+    doors_n  : Door = []
     
     def log(self):
         self.skud.log()

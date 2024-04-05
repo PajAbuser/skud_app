@@ -13,6 +13,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 import django.core.serializers.json as json_serializer
 import functools
+import skud_app.services.Running_Service as Running_Service
 
 
 def log(func):
@@ -121,31 +122,14 @@ class SKUDViewSet(ViewSet):
         data: dict = json.loads(request.body)
         self.skudServ.rem(data.get("Door"), data.get("Pass"))
         
-    def _add(self, request):
-        data: dict = json.loads(request.body)
-        return HttpResponse(content="")
-        
-    def _add(self, request):
-        data: dict = json.loads(request.body)
-        return HttpResponse(content="")
-        
-    def _add(self, request):
-        data: dict = json.loads(request.body)
-        return HttpResponse(content="")
 
-    def _add(self, request):
-        data: dict = json.loads(request.body)
-        return HttpResponse(content="")
-        
-    def _add(self, request):
-        data: dict = json.loads(request.body)
-        return HttpResponse(content="")
-        
-    def _add(self, request):
-        data: dict = json.loads(request.body)
-        return HttpResponse(content="")
-        
-    def _add(self, request):
-        data: dict = json.loads(request.body)  
-        return HttpResponse(content="")
+@extend_schema_view(
+    getOperation=extend_schema(summary='Get information about operation', responses=OperationSerializer, auth=False)
+)
+class OperationViewSet(ViewSet):
     
+    OpServ = Running_Service.OperationsService()
+        
+    @action(detail=True, methods=['get'])
+    def getOperation(self, id):
+        return self.OpServ.get_operation(id)
