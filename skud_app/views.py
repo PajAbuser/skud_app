@@ -1,6 +1,8 @@
+import datetime
 import io
 from django.http import HttpResponse, JsonResponse, FileResponse, HttpRequest
 import json
+from rest_framework import request
 from django.views.decorators.csrf import csrf_exempt
 from skud_app.models import *
 from skud_app.serializers import *
@@ -10,6 +12,26 @@ from rest_framework.parsers import JSONParser
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 import django.core.serializers.json as json_serializer
+import functools
+
+
+def log(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # req: WSGIRequest = make_middleware_aware(args[1])
+        # req1: HttpRequest
+        req  = args[1]
+        # Записать в файл информацию о вызове метода
+        with open('method_calls.log', 'a') as f:
+            f.write(f"<{datetime.datetime.now()}> Вызван метод {func.__name__} с аргументами {repr(args)} и ключевыми словами {repr(kwargs)}")
+            if type(req) == request.Request:
+                f.write(f" от {req.META.get('REMOTE_ADDR')} через {req.META.get('HTTP_X_FORWARDED_FOR')}\n")
+            else: f.write(f"\n")
+
+        # Вызвать исходный метод
+        return func(*args, **kwargs)
+    return wrapper
+
 
 @extend_schema_view(
 # list=extend_schema(summary='Applications list', parameters=[     ], auth=False), # serializer tooda
@@ -24,10 +46,11 @@ class SKUDViewSet(ViewSet):
     serializer_class = SKUDSerializer
     
     skudServ = SKUD_Service()
-    
+    @log
     def create_SKUD(self, request):
         return self.skudServ.create()
     
+    @log
     @action(detail=True, methods=['post'])
     def add_pass(self, request): 
         if type(request) == HttpRequest:
@@ -44,6 +67,7 @@ class SKUDViewSet(ViewSet):
             pas = serializer.create()
             self.skudServ.add(pas)
     
+    @log
     @action(detail=True, methods=['post'])
     def add_door(self, request:HttpRequest):
         data: dict = json.loads(request.body)
@@ -57,6 +81,7 @@ class SKUDViewSet(ViewSet):
         self.skudServ.add(door)
         return HttpResponse(content=f"sozdan door: {door}")
 
+    @log
     @action(detail=True, methods=['post'])
     def add_door_pass(self, request, id:UUID):
         data: dict = json.loads(request.body)
