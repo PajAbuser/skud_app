@@ -23,29 +23,29 @@ def log(func):
         req  = args[1]
         # Записать в файл информацию о вызове метода
         with open('method_calls.log', 'a') as f:
-            f.write(f"<{datetime.datetime.now()}> Вызван метод {func.__name__} с аргументами {repr(args)} и ключевыми словами {repr(kwargs)}")
+            f.write(f"<{datetime.datetime.now()}> Вызван метод {'{:>16}'.format(func.__name__)} с аргументами {repr(args)} и ключевыми словами {repr(kwargs)}")
             if type(req) == request.Request:
                 f.write(f" от {req.META.get('REMOTE_ADDR')} через {req.META.get('HTTP_X_FORWARDED_FOR')}\n")
             else: f.write(f"\n")
-
-        # Вызвать исходный метод
         return func(*args, **kwargs)
     return wrapper
 
 
 @extend_schema_view(
-# list=extend_schema(summary='Applications list', parameters=[     ], auth=False), # serializer tooda
-
-add_pass=extend_schema(summary='Add new pass to SKUD', request=HttpRequest),
-add_door=extend_schema(summary='Add new door to SKUD', request=HttpRequest),
+add_pass     =extend_schema(summary='Add new pass to SKUD'           , request=HttpRequest),
+repr_pass    =extend_schema(summary='Represent pass in SKUD'         , request=HttpRequest),
+repr_passes  =extend_schema(summary='Represent all pass in SKUD'     , request=HttpRequest),
+add_door     =extend_schema(summary='Add new door to SKUD'           , request=HttpRequest),
+repr_door    =extend_schema(summary='Represent door in SKUD'         , request=HttpRequest),
+repr_doors   =extend_schema(summary='Represent all door in SKUD'     , request=HttpRequest),
 add_door_pass=extend_schema(summary='Add pass to door & SKUD if none', request=HttpRequest),
-
-#get_one=extend_schema(summary='One application', description='Allows to get one application by it\'s ID or returns error')
+remove_pass  =extend_schema(summary='Remove pass from door'          , request=HttpRequest),
 )
 class SKUDViewSet(ViewSet):
     serializer_class = SKUDSerializer
     
     skudServ = SKUD_Service()
+    
     @log
     def create_SKUD(self, request):
         return self.skudServ.create()
@@ -68,6 +68,17 @@ class SKUDViewSet(ViewSet):
             self.skudServ.add(pas)
     
     @log
+    @action(detail=True, methods=['get'], url_path='passes/<int:id>')
+    def repr_pass(self, request, id):
+        if self.skudServ.skuds['0'].passes.keys():
+            return HttpResponse(content=f"{list(self.skudServ.skuds['0'].passes.keys())[id]}")
+        else: return HttpResponse(content="{}")
+    @log
+    @action(detail=False, methods=['get'], url_path='passes/')
+    def repr_passes(self):
+        return HttpResponse(content=f"{self.skudServ.skuds['0'].passes}")
+        
+    @log
     @action(detail=True, methods=['post'])
     def add_door(self, request:HttpRequest):
         data: dict = json.loads(request.body)
@@ -80,6 +91,18 @@ class SKUDViewSet(ViewSet):
         door = serializer.create()
         self.skudServ.add(door)
         return HttpResponse(content=f"sozdan door: {door}")
+    
+    @log
+    @action(detail=True, methods=['get'], url_path='doors/<int:id>')
+    def repr_door(self, request, id):
+        if self.skudServ.skuds['0'].doors.keys():
+            return HttpResponse(content=f"{list(self.skudServ.skuds['0'].doors.keys())[id]}")
+        else: return HttpResponse(content="{}")
+    
+    @log
+    @action(detail=False, methods=['get'], url_path='doors/')
+    def repr_doors(self):
+        return HttpResponse(content=f"{self.skudServ.skuds['0'].doors}")
 
     @log
     @action(detail=True, methods=['post'])
@@ -95,10 +118,13 @@ class SKUDViewSet(ViewSet):
         self.skudServ.reg(door1,pass1, skud_id)
         return HttpResponse(content=f"pass {pass1} is \
             added to door {self.skudServ.skuds.get(skud_id).doors.get(data.get('Door').get('UUID'))}")
-            
-    def _add(self, request):
+    
+    @log
+    @action(detail=True, methods=['delete'])
+    def remove_pass(self, request):
         data: dict = json.loads(request.body)
-        return HttpResponse(content="")
+        skud_id = data.get('skud_id')
+        self.skudServ.rem(data.get("Door"), data.get("Pass"), skud_id=skud_id)
         
     def _add(self, request):
         data: dict = json.loads(request.body)
