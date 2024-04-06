@@ -12,6 +12,8 @@ urlpatterns = [
     path('check/', SKUDViewSet.as_view({'post':'check1'})),
     path('check/<int:door_id>/<int:pass_id>', SKUDViewSet.as_view({'get':'check2'})),
     path('operations/<int:id>', OperationViewSet.as_view({'get':'getOperation'})),
+    path('logs/:export', SKUDViewSet.as_view({'get':'export_logs'})),
+    path('logs/<str:id>/', SKUDViewSet.as_view({'get':'export'})),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
 ]

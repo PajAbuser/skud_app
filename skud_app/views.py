@@ -13,7 +13,8 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.decorators import action
 import django.core.serializers.json as json_serializer
 import functools
-import skud_app.services.Running_Service as Running_Service
+from skud_app.services.Running_Service import *
+from skud_app.scheduler import scheduler, DateTrigger
 
 
 def log(func):
@@ -25,7 +26,13 @@ def log(func):
             if type(req) == request.Request:
                 f.write(f" от {req.META.get('REMOTE_ADDR')} через {req.META.get('HTTP_X_FORWARDED_FOR')}\n")
             else: f.write(f"\n")
-        return func(*args, **kwargs)
+        if args:
+            if kwargs:
+                return func(*args, **kwargs)
+            else: return func(*args)
+        elif kwargs:
+            return func(**kwargs)
+        else: return func()
     return wrapper
 
 
@@ -43,10 +50,30 @@ class SKUDViewSet(ViewSet):
     serializer_class = SKUDSerializer
     
     skudServ = SKUD_Service()
+    opServ = OperationsService()
     
     @log
-    def create_SKUD(self, request):
-        return self.skudServ.create()
+    @action(detail=False)
+    def export(self, id:str):
+            id = uuid4(id)
+            return FileResponse(as_attachment=self.opServ.operations.get(id).result)
+    
+    @log
+    @action(detail=False)
+    def export_logs(self, _):
+        operation_id = self.opServ.create_operation()
+        print(operation_id)
+        scheduler.add_job(self.export_logs_infile, DateTrigger(datetime.datetime.now()), (operation_id, ))
+        return HttpResponse(content={'operation_id':operation_id})
+    
+    @log
+    @action(detail=False)
+    def export_logs_infile(self, operation_id:UUID):
+        name = f"/logs/{datetime.datetime.now()}"
+        with open(name, 'w') as f:
+            with open("/method_calls.log", 'r') as logs:
+                f.write(logs)
+        self.opServ.finish_operation(operation_id, {'url':name})
     
     @log
     @action(detail=True, methods=['post'])
@@ -161,7 +188,7 @@ class SKUDViewSet(ViewSet):
 )
 class OperationViewSet(ViewSet):
     
-    OpServ = Running_Service.OperationsService()
+    OpServ = OperationsService()
         
     @action(detail=True, methods=['get'])
     def getOperation(self, id):
