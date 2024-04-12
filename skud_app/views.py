@@ -22,9 +22,9 @@ def log(func):
     def wrapper(*args, **kwargs):
         req  = args[1]
         with open('method_calls.log', 'a') as f:
-            f.write(f"<{datetime.datetime.now()}> Р’С‹Р·РІР°РЅ РјРµС‚РѕРґ {'{:>16}'.format(func.__name__)} СЃ Р°СЂРіСѓРјРµРЅС‚Р°РјРё {repr(args)} Рё РєР»СЋС‡РµРІС‹РјРё СЃР»РѕРІР°РјРё {repr(kwargs)}")
+            f.write(f"<{datetime.datetime.now()}> Вызван метод {'{:>16}'.format(func.__name__)} с атрибутами {repr(args)} и ключевыми словами {repr(kwargs)}")
             if type(req) == request.Request:
-                f.write(f" РѕС‚ {req.META.get('REMOTE_ADDR')} С‡РµСЂРµР· {req.META.get('HTTP_X_FORWARDED_FOR')}\n")
+                f.write(f" от {req.META.get('REMOTE_ADDR')} через {req.META.get('HTTP_X_FORWARDED_FOR')}\n")
             else: f.write(f"\n")
         if args:
             if kwargs:
@@ -51,31 +51,28 @@ class SKUDViewSet(ViewSet):
     
     skudServ = SKUD_Service()
     opServ = OperationsService()
-    
-    @log
+
     @action(detail=False)
     def export(self, id:str):
             id = uuid4(id)
-            return FileResponse(as_attachment=self.opServ.operations.get(id).result)
-    
-    @log
+            return FileResponse(as_attachment=open(f"{self.opServ.operations.get(id).result}"))
+
     @action(detail=False)
     def export_logs(self, _):
         operation_id = self.opServ.create_operation()
         print(operation_id)
         scheduler.add_job(self.export_logs_infile, DateTrigger(datetime.datetime.now()), (operation_id, ))
         return HttpResponse(content={'operation_id':operation_id})
-    
-    @log
+
     @action(detail=False)
     def export_logs_infile(self, operation_id:UUID):
         name = f"/logs/{datetime.datetime.now()}"
+        print(name)
         with open(name, 'w') as f:
             with open("/method_calls.log", 'r') as logs:
                 f.write(logs)
-        self.opServ.finish_operation(operation_id, {'url':name})
-    
-    @log
+        self.opServ.finish_operation(operation_id, name)
+
     @action(detail=True, methods=['post'])
     def add_pass(self, request): 
         if type(request) == HttpRequest:
@@ -91,19 +88,17 @@ class SKUDViewSet(ViewSet):
             print("validated" if serializer.is_valid() else "non-valid", f"pass_id={request.get('UUID')} pass.data")
             pas = serializer.create()
             self.skudServ.add(pas)
-    
-    @log
+
     @action(detail=True, methods=['get'], url_path='passes/<int:id>')
     def repr_pass(self, request, id):
         if len(self.skudServ.passes_n) > id:
             return HttpResponse(content=f"{self.skudServ.skud.passes.get(self.skudServ.passes_n[id])}")
         else: return HttpResponse(content="No such pass")
-    @log
+
     @action(detail=False, methods=['get'], url_path='passes/')
     def repr_passes(self, request):
         return HttpResponse(content=f"{self.skudServ.skud.passes}")
         
-    @log
     @action(detail=True, methods=['post'])
     def add_door(self, request:HttpRequest):
         data: dict = json.loads(request.body)
@@ -117,19 +112,16 @@ class SKUDViewSet(ViewSet):
         self.skudServ.add(door)
         return HttpResponse(content=f"sozdan door: {door}")
     
-    @log
     @action(detail=True, methods=['get'], url_path='doors/<int:id>')
     def repr_door(self, request, id):
         if len(self.skudServ.doors_n) > id:
             return HttpResponse(content=f"{self.skudServ.skud.doors.get(self.skudServ.doors_n[id])}")
         else: return HttpResponse(content="No such pass")
-    
-    @log
+
     @action(detail=False, methods=['get'], url_path='doors/')
     def repr_doors(self, request):
         return HttpResponse(content=f"{self.skudServ.skud.doors}")
 
-    @log
     @action(detail=True, methods=['post'], url_path='doors/<int:id>/passes')
     def add_door_pass(self, request, id):
         data: dict = json.loads(request.body)
@@ -142,8 +134,7 @@ class SKUDViewSet(ViewSet):
         self.skudServ.reg(door1,pass1)
         return HttpResponse(content=f"pass {pass1} is \
             added to door {self.skudServ.skud.doors.get(data.get('Door').get('UUID'))}")
-    
-    @log
+
     @action(detail=True, methods=['delete'], url_path='doors/<int:id>/passes')
     def remove_passes(self, request):
         data: dict = json.loads(request.body)
@@ -151,13 +142,11 @@ class SKUDViewSet(ViewSet):
         for pas in data.get("Passes"):
             self.skudServ.rem(door, pas)
         self.repr_door(door)
-            
-    @log
+
     @action(detail=True, methods=['delete'], url_path='doors/<int:door_id>/passes/<int:pass_id>')
     def remove_pass(self, door_id: int, pass_id: int):
         self.skudServ.skud.doors.get(self.skudServ.doors_n[door_id]).allowed.popitem(self.skudServ.skud.passes.get(self.skudServ.passes_n[pass_id]))
-        
-    @log
+
     @action(detail=True, methods=['post'], url_path='check/')
     def check1(self, request):
         data: dict = json.loads(request.body)
@@ -169,8 +158,7 @@ class SKUDViewSet(ViewSet):
             self.add_pass(request)
         self.skudServ.check(door1,pass1)
         return HttpResponse(content=f"pass {pass1} is valid to door {door1}")
-        
-    @log
+
     @action(detail=True, methods=['get'], url_path='check/<int:door_id>/<int:pass_id>')
     def check2(self, door_id:int, pass_id:int):
         data: dict = json.loads(request.body)
