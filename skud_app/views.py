@@ -20,6 +20,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import viewsets
+from skud_app.tests import unit, e2e
 
 
 # def log_method_calls(log_file):
@@ -123,7 +124,7 @@ class SKUDViewSet(ViewSet):
     
     skudServ = SKUD_Service()
     opServ = OperationsService()
-
+    
     @action(detail=False)
     def export(self, request, id:str):
             id = UUID(id)
@@ -232,8 +233,7 @@ class SKUDViewSet(ViewSet):
         pass1 = self.skudServ.skud.passes.get(data.get('Pass').get('UUID'))
         if pass1 == None:
             self.add_pass(request)
-        self.skudServ.check(door1,pass1)
-        return HttpResponse(content=f"pass {pass1} is valid to door {door1}")
+        return self.skudServ.check(door1,pass1)
 
     @action(detail=True, methods=['get'], url_path='check/<int:door_id>/<int:pass_id>')
     def check2(self, door_id:int, pass_id:int):
@@ -243,6 +243,15 @@ class SKUDViewSet(ViewSet):
         self.skudServ.check(door1,pass1)
         return HttpResponse(content=f"pass {pass1} is valid to door {door1}")
         
+    @action(detail=True, methods=['get'], url_path='tests/unit')
+    def test_unit(self, req):
+        for method in inspect.getmembers(unit.UnitTest, inspect.isfunction):
+            exec(method)
+    
+    @action(detail=True, methods=['get'], url_path='tests/e2e')
+    def test_e2e(self, req):
+        for method in inspect.getmembers(e2e.E2ETests, inspect.isfunction):
+            exec(method)
         
         
         

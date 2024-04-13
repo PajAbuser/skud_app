@@ -1,3 +1,4 @@
+import datetime
 from django.http import HttpResponse
 from skud_app.models import *
 
@@ -63,18 +64,25 @@ class SKUD_Service():
             self.skud.doors.get(door1).status = False
 
     def check(self, door1, pas1):   #Поменять состояние двери, если пропуск подходит
+        with open("methods_call.log", 'a') as f:
+            f.write(f"{datetime.datetime.now()} pass:{pas1} is tried to get access to the door:{door1}")
         if type(door1) == Door and type(pas1) == Pas:      
             if self.valid(door1, pas1):
                 if door1.status:
                     self.unlock(door1)
-            else: self.lock(door1)
+                else: self.lock(door1)
+                return HttpResponse(content=f"pass {pas1} is valid to door {door1}")
+            else: return HttpResponse(content="Invalid pass")
         elif type(door1) == str and type(pas1) == str:
             door1 = self.skud.doors.get(door1)
             pas1  = self.skud.passes.get(pas1)
             if self.valid(door1, pas1):
                 if door1.status:
                     self.unlock(door1)
-            else: self.lock(door1)
+                else: self.lock(door1)
+                return HttpResponse(content=f"pass {pas1} is valid to door {door1}")
+            else:
+                return HttpResponse(content="Invalid pass")
 
     def logs(self):
         f = open("filename.txt")
