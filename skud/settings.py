@@ -37,7 +37,8 @@ ALLOWED_HOSTS = [
                  '7.tcp.eu.ngrok.io',
                  '8.tcp.eu.ngrok.io',
                  '9.tcp.eu.ngrok.io',
-                 'd896-79-139-211-69.ngrok-free.app'
+                 'd896-79-139-211-69.ngrok-free.app',
+                 'e9ce-79-139-211-69.ngrok-free.app'
                  ]
 
 

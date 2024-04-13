@@ -61,7 +61,7 @@ class SKUD:
     passes:  dict[str, Pas] = {}
     doors:   dict[str, Door] = {}
     
-    def __init__(self, doors: dict[str, Door], passes: dict[str, Pas]):
+    def __init__(self, doors: dict[str, Door], passes: dict[str, Pas], *args, **kwargs):
             self.doors = doors
             self.passes = passes
 
@@ -72,8 +72,12 @@ class Operation:
     
     id:     UUID
     done:   bool
+    result: any
     
     def __init__(self, id: UUID, done: bool = False, result = None) -> None:
         self.id     = id
         self.done   = done
         self.result = result
+        
+    def __repr__(self) -> str:
+        return '{' + f"id={self.id}, done={self.done}, result={self.result}" + '}'

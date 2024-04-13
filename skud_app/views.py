@@ -1,5 +1,5 @@
 import datetime
-import io
+import inspect
 from django.http import HttpResponse, JsonResponse, FileResponse, HttpRequest
 import json
 from rest_framework import request
@@ -14,38 +14,110 @@ from rest_framework.decorators import action
 import django.core.serializers.json as json_serializer
 import functools
 from skud_app.services.Running_Service import *
-from skud_app.scheduler import scheduler, DateTrigger
+from skud_app.scheduler import scheduler, DateTrigger, CronTrigger
+from functools import wraps
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.exceptions import APIException
+from rest_framework import viewsets
 
 
-def log(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        req  = args[1]
-        with open('method_calls.log', 'a') as f:
-            f.write(f"<{datetime.datetime.now()}> Вызван метод {'{:>16}'.format(func.__name__)} с атрибутами {repr(args)} и ключевыми словами {repr(kwargs)}")
-            if type(req) == request.Request:
-                f.write(f" от {req.META.get('REMOTE_ADDR')} через {req.META.get('HTTP_X_FORWARDED_FOR')}\n")
-            else: f.write(f"\n")
-        if args:
-            if kwargs:
-                return func(*args, **kwargs)
-            else: return func(*args)
-        elif kwargs:
-            return func(**kwargs)
-        else: return func()
-    return wrapper
+# def log_method_calls(log_file):
+#     def decorator(cls):
+#         for name, method in inspect.getmembers(cls, inspect.isfunction):
+#             @functools.wraps(method)
+#             def wrapper(self, *args, **kwargs):
+#                 if len(args) > 0: req  = args[0]
+#                 else: req = args
+#                 with open("method_calls.log", 'a') as f:
+#                     f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(method.__name__)} with args {repr(args)} and keywords {repr(kwargs)}")
+#                     if type(req) == request.Request:
+#                         f.write(f" from {req.META.get('REMOTE_ADDR')} through {'localhost' if req.META.get('HTTP_X_FORWARDED_FOR') == None else req.META.get('HTTP_X_FORWARDED_FOR')}" + '\n')
+#                     else: f.write(f"\n")
+#                 if name == 'throttled': return method(self, HttpRequest(), wait=10)
+#                 else: return method(self, *args, **kwargs)
+#             setattr(cls, name, wrapper)
+#         return cls
+#     return decorator
 
+# def log_method_calls(cls):
+#     print("in decorator")
+#     # inspect.getargs(cls)
+#     class Wrapper(cls):
+#         for name, method in inspect.getmembers(cls,inspect.isfunction):
+#             print("in hz",name,method)
+#             @functools.wraps(method)
+#             def dispatch(self, *args, **kwargs):
+#                 if(args): req = args[1]
+#                 with open("method_calls.log", 'w') as f:
+#                         f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(super.name)} with args {repr(args)} and keywords {repr(kwargs)}")
+#                         if type(req) == request.Request:
+#                             f.write(f" from {req.META.get('REMOTE_ADDR')} through {'localhost' if req.META.get('HTTP_X_FORWARDED_FOR') == None else req.META.get('HTTP_X_FORWARDED_FOR')}" + '\n')
+#                         else: f.write(f"\n")
+#     return Wrapper
+#     # def wrap(self, request, *args, **kwargs):
+#     #     # Получаем имя вызываемого метода
+#     #     method_name = request.method.lower()
+        
+#     #     # Получаем вызываемый метод класса
+#     #     method = getattr(self, method_name, None)
+        
+#     #     if method is None:
+#     #         # Если метод не найден, возвращаем ошибку 405 (Method Not Allowed)
+#     #         return Response({'error': 'Method not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        
+#     #     # Создаем словарь с информацией о вызове метода
+#     #     # method_info = {
+#     #     #     'method_name': method_name,
+#     #     #     'args': args,
+#     #     #     'kwargs': kwargs
+#     #     # }
+        
+#     #     # Записываем информацию о вызове метода в файл
+#     #     req = args
+        
+def log_method_calls(cls):
+
+    # Получить имя класса
+    class_name = cls.__name__
+
+    # Обернуть все методы класса
+    for name, method in cls.__dict__.items():
+        if callable(method):
+            # Обернуть метод
+            @functools.wraps(method)
+            def wrapper(self, *args, **kwargs):
+                # Залогировать вызов метода
+                if len(args) > 0: req  = args[0]
+                else: req = args
+                with open("method_calls.log", 'a') as f:
+                    f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(method.__name__)} with args {repr(args)} and keywords {repr(kwargs)}")
+                    if type(req) == request.Request:
+                        f.write(f" from {req.META.get('REMOTE_ADDR')} through {'localhost' if req.META.get('HTTP_X_FORWARDED_FOR') == None else req.META.get('HTTP_X_FORWARDED_FOR')}" + '\n')
+                    else: f.write(f"\n")
+
+                # Вызвать оригинальный метод
+                return method(self, *args, **kwargs)
+
+            # Заменить оригинальный метод обернутым
+            setattr(cls, name, wrapper)
+
+    # Вернуть декорированный класс
+    return cls
 
 @extend_schema_view(
-add_pass     =extend_schema(summary='Add new pass to SKUD'           , request=HttpRequest),
-repr_pass    =extend_schema(summary='Represent pass in SKUD'         , request=HttpRequest),
-repr_passes  =extend_schema(summary='Represent all pass in SKUD'     , request=HttpRequest),
-add_door     =extend_schema(summary='Add new door to SKUD'           , request=HttpRequest),
-repr_door    =extend_schema(summary='Represent door in SKUD'         , request=HttpRequest),
-repr_doors   =extend_schema(summary='Represent all door in SKUD'     , request=HttpRequest),
-add_door_pass=extend_schema(summary='Add pass to door & SKUD if none', request=HttpRequest),
-remove_pass  =extend_schema(summary='Remove pass from door'          , request=HttpRequest),
+add_pass          =extend_schema(summary='Add new pass to SKUD'           , request=HttpRequest),
+repr_pass         =extend_schema(summary='Represent pass in SKUD'         , request=HttpRequest),
+repr_passes       =extend_schema(summary='Represent all pass in SKUD'     , request=HttpRequest),
+add_door          =extend_schema(summary='Add new door to SKUD'           , request=HttpRequest),
+repr_door         =extend_schema(summary='Represent door in SKUD'         , request=HttpRequest),
+repr_doors        =extend_schema(summary='Represent all door in SKUD'     , request=HttpRequest),
+add_door_pass     =extend_schema(summary='Add pass to door & SKUD if none', request=HttpRequest),
+remove_pass       =extend_schema(summary='Remove pass from door'          , request=HttpRequest),
+export            =extend_schema(summary='Get log by operation id'        , request=HttpRequest),
+export_logs_infile=extend_schema(summary='Get logs exported in file'      , request=HttpRequest),
 )
+# @log_method_calls
 class SKUDViewSet(ViewSet):
     serializer_class = SKUDSerializer
     
@@ -53,25 +125,29 @@ class SKUDViewSet(ViewSet):
     opServ = OperationsService()
 
     @action(detail=False)
-    def export(self, id:str):
-            id = uuid4(id)
-            return FileResponse(as_attachment=open(f"{self.opServ.operations.get(id).result}"))
+    def export(self, request, id:str):
+            id = UUID(id)
+            if self.opServ.operations.get(id).done:
+                return FileResponse(open(self.opServ.operations.get(id).result, 'rb'))
+            else: return HttpResponse(content="Operation is still running")
 
     @action(detail=False)
-    def export_logs(self, _):
+    def export_logs(self, request):
         operation_id = self.opServ.create_operation()
-        print(operation_id)
-        scheduler.add_job(self.export_logs_infile, DateTrigger(datetime.datetime.now()), (operation_id, ))
-        return HttpResponse(content={'operation_id':operation_id})
+        scheduler.add_job(self.export_logs_infile, trigger=DateTrigger(datetime.datetime.now()), args=(operation_id, ))
+        if not scheduler.running: scheduler.start()
+        return HttpResponse(JsonResponse({'operation_id':operation_id}))
 
     @action(detail=False)
     def export_logs_infile(self, operation_id:UUID):
-        name = f"/logs/{datetime.datetime.now()}"
-        print(name)
-        with open(name, 'w') as f:
-            with open("/method_calls.log", 'r') as logs:
-                f.write(logs)
+        name = "logs/" + f"{str(datetime.datetime.now()).replace(' ','-').replace(':','-').replace('.','-')}.log"
+        with open(name, 'w+') as f:
+            with open(f"method_calls.log", 'r') as logs:
+                for l in logs:
+                    f.write(l)
         self.opServ.finish_operation(operation_id, name)
+        
+        # print("ended operation - ",self.opServ.get_operation(operation_id))
 
     @action(detail=True, methods=['post'])
     def add_pass(self, request): 
