@@ -4,6 +4,7 @@ from django.http import HttpResponse, JsonResponse, FileResponse, HttpRequest
 import json
 from rest_framework import request
 from django.views.decorators.csrf import csrf_exempt
+from skud.skud_app.skud_app.tests import test_e2e
 from skud_app.models import *
 from skud_app.serializers import *
 from rest_framework.viewsets import ViewSet
@@ -20,7 +21,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import viewsets
-from skud_app.tests import unit, e2e
+from skud.skud_app.skud_app.tests import test_unit
 
 
 # def log_method_calls(log_file):
@@ -245,12 +246,12 @@ class SKUDViewSet(ViewSet):
         
     @action(detail=True, methods=['get'], url_path='tests/unit')
     def test_unit(self, req):
-        for method in inspect.getmembers(unit.UnitTest, inspect.isfunction):
+        for method in inspect.getmembers(test_unit.UnitTest, inspect.isfunction):
             exec(method)
     
     @action(detail=True, methods=['get'], url_path='tests/e2e')
     def test_e2e(self, req):
-        for method in inspect.getmembers(e2e.E2ETests, inspect.isfunction):
+        for method in inspect.getmembers(test_e2e.E2ETests, inspect.isfunction):
             exec(method)
         
         

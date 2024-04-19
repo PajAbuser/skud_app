@@ -7,6 +7,7 @@ from datetime import datetime
 from skud_app.models import *
 from skud_app.views import *
 
+@pytest.mark.unit
 class E2ETests:
 
     req :json = {

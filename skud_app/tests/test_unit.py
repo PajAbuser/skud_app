@@ -6,6 +6,7 @@ from datetime import datetime
 from skud_app.models import *
 from skud_app.services.SKUD_Service import *
 
+@pytest.mark.unit
 class UnitTest:
 
     def randomString(length:int) -> str:
