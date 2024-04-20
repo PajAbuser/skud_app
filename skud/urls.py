@@ -14,8 +14,6 @@ urlpatterns = [
     path('operations/<int:id>', OperationViewSet.as_view({'get':'getOperation'})),
     path('logs/:export', SKUDViewSet.as_view({'get':'export_logs'})),
     path('logs/<str:id>/', SKUDViewSet.as_view({'get':'export'})),
-    path('tests/unit', SKUDViewSet.as_view({'get':'test_unit'})),
-    path('tests/e2e', SKUDViewSet.as_view({'get':'test_e2e'})),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
 ]

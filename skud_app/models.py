@@ -64,7 +64,7 @@ class SKUD:
     def __init__(self, doors: dict[str, Door], passes: dict[str, Pas], *args, **kwargs):
             self.doors = doors
             self.passes = passes
-            self.history = open("method_logs.log", 'a')
+            self.history = open("method_calls.log", 'a')
 
     def __repr__(self) -> str:
         return f"passes: {self.passes}, doors: {self.doors}"

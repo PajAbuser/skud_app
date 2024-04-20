@@ -1,13 +1,14 @@
 import json
+import os
+import sys
 import pytest
 import random
 import math
 from uuid import uuid4
 from datetime import datetime
-from skud_app.models import *
-from skud_app.views import *
+from models import *
+from views import SKUDViewSet, SKUD_Service
 
-@pytest.mark.unit
 class E2ETests:
 
     req :json = {
@@ -38,7 +39,7 @@ class E2ETests:
         }
       }
     }
-
+    
     def test_pass_creation(req):
         SKUDViewSet.skudView.add_pass(req)
         pas = E2ETests.skudView.skudServ.skud.passes.get(req.get("Pass").get('id'))
