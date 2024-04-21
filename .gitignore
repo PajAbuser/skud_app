@@ -1,2 +1,3 @@
 method_calls.log
 /logs
+**/__pycache__

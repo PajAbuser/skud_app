@@ -20,62 +20,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import viewsets
-
-
-# def log_method_calls(log_file):
-#     def decorator(cls):
-#         for name, method in inspect.getmembers(cls, inspect.isfunction):
-#             @functools.wraps(method)
-#             def wrapper(self, *args, **kwargs):
-#                 if len(args) > 0: req  = args[0]
-#                 else: req = args
-#                 with open("method_calls.log", 'a') as f:
-#                     f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(method.__name__)} with args {repr(args)} and keywords {repr(kwargs)}")
-#                     if type(req) == request.Request:
-#                         f.write(f" from {req.META.get('REMOTE_ADDR')} through {'localhost' if req.META.get('HTTP_X_FORWARDED_FOR') == None else req.META.get('HTTP_X_FORWARDED_FOR')}" + '\n')
-#                     else: f.write(f"\n")
-#                 if name == 'throttled': return method(self, HttpRequest(), wait=10)
-#                 else: return method(self, *args, **kwargs)
-#             setattr(cls, name, wrapper)
-#         return cls
-#     return decorator
-
-# def log_method_calls(cls):
-#     print("in decorator")
-#     # inspect.getargs(cls)
-#     class Wrapper(cls):
-#         for name, method in inspect.getmembers(cls,inspect.isfunction):
-#             print("in hz",name,method)
-#             @functools.wraps(method)
-#             def dispatch(self, *args, **kwargs):
-#                 if(args): req = args[1]
-#                 with open("method_calls.log", 'w') as f:
-#                         f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(super.name)} with args {repr(args)} and keywords {repr(kwargs)}")
-#                         if type(req) == request.Request:
-#                             f.write(f" from {req.META.get('REMOTE_ADDR')} through {'localhost' if req.META.get('HTTP_X_FORWARDED_FOR') == None else req.META.get('HTTP_X_FORWARDED_FOR')}" + '\n')
-#                         else: f.write(f"\n")
-#     return Wrapper
-#     # def wrap(self, request, *args, **kwargs):
-#     #     # Получаем имя вызываемого метода
-#     #     method_name = request.method.lower()
-        
-#     #     # Получаем вызываемый метод класса
-#     #     method = getattr(self, method_name, None)
-        
-#     #     if method is None:
-#     #         # Если метод не найден, возвращаем ошибку 405 (Method Not Allowed)
-#     #         return Response({'error': 'Method not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        
-#     #     # Создаем словарь с информацией о вызове метода
-#     #     # method_info = {
-#     #     #     'method_name': method_name,
-#     #     #     'args': args,
-#     #     #     'kwargs': kwargs
-#     #     # }
-        
-#     #     # Записываем информацию о вызове метода в файл
-#     #     req = args
-        
+       
 def log_method_calls(cls):
 
     # Получить имя класса
