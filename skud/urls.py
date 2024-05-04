@@ -2,6 +2,7 @@ from django.urls import path
 from skud_app.views import SKUDViewSet, OperationViewSet
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+
 urlpatterns = [
     path('passes/', SKUDViewSet.as_view({'get':'repr_passes','post':'add_pass'}, name='passseseseseses')),
     path('passes/<int:id>/', SKUDViewSet.as_view({'get':'repr_pass'})),
