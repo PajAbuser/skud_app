@@ -1,5 +1,6 @@
 import datetime
 import inspect
+import os
 from django.http import HttpResponse, JsonResponse, FileResponse, HttpRequest
 import json
 from rest_framework import request
@@ -23,31 +24,25 @@ from rest_framework import viewsets
        
 def log_method_calls(cls):
 
-    # Получить имя класса
     class_name = cls.__name__
 
-    # Обернуть все методы класса
     for name, method in cls.__dict__.items():
         if callable(method):
-            # Обернуть метод
             @functools.wraps(method)
             def wrapper(self, *args, **kwargs):
-                # Залогировать вызов метода
                 if len(args) > 0: req  = args[0]
                 else: req = args
-                with open("method_calls.log", 'a') as f:
+                # with open(os.path.join(os.path.dirname(__file__), 'logs', 'method_calls.log'), 'a+') as f:
+                with open("method_calls.log", 'a+') as f:
                     f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(method.__name__)} with args {repr(args)} and keywords {repr(kwargs)}")
                     if type(req) == request.Request:
                         f.write(f" from {req.META.get('REMOTE_ADDR')} through {'localhost' if req.META.get('HTTP_X_FORWARDED_FOR') == None else req.META.get('HTTP_X_FORWARDED_FOR')}" + '\n')
                     else: f.write(f"\n")
 
-                # Вызвать оригинальный метод
                 return method(self, *args, **kwargs)
 
-            # Заменить оригинальный метод обернутым
             setattr(cls, name, wrapper)
 
-    # Вернуть декорированный класс
     return cls
 
 @extend_schema_view(
@@ -62,7 +57,7 @@ remove_pass       =extend_schema(summary='Remove pass from door'          , requ
 export            =extend_schema(summary='Get log by operation id'        , request=HttpRequest),
 export_logs_infile=extend_schema(summary='Get logs exported in file'      , request=HttpRequest),
 )
-# @log_method_calls
+@log_method_calls
 class SKUDViewSet(ViewSet):
     serializer_class = SKUDSerializer
     
@@ -85,7 +80,7 @@ class SKUDViewSet(ViewSet):
 
     @action(detail=False)
     def export_logs_infile(self, operation_id:UUID):
-        name = "logs/" + f"{str(datetime.datetime.now()).replace(' ','-').replace(':','-').replace('.','-')}.log"
+        name = "" + f"{str(datetime.datetime.now()).replace(' ','-').replace(':','-').replace('.','-')}.log"
         with open(name, 'w+') as f:
             with open(f"method_calls.log", 'r') as logs:
                 for l in logs:

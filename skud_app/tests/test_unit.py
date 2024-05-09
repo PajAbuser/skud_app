@@ -8,36 +8,37 @@ from datetime import datetime
 from skud_app.models import *
 # from services.SKUD_Service import *
 
-class UnitTest:
 
-    def randomString(length:int) -> str:
+class test_unit:
+    @staticmethod
+    def randomString(self, length:int) -> str:
         # for (i = 0, i < length, i++):
         string = ""
         for i in length:
-            string += chr(int(random.Random())%65)
+            string += chr(int(random.randrange(1,65)))
         return string
-
-    def randomPas(length:int) -> Pas:
+    @staticmethod
+    def randomPas(self, length:int) -> Pas:
         passes: dict[str,Pas] = {}
         for i in length:
             id:       UUID = uuid4()
-            username: str  = UnitTest.randomString(10)
-            fio:      str  = UnitTest.randomString(20)
+            username: str  = self.randomString(10)
+            fio:      str  = self.randomString(20)
             passes.update[id] = Pas(id,username,fio)
         return passes
 
-    def test_pass_creation():
+    def test_pass_creation(self):
         id:       UUID = uuid4()
-        username: str  = UnitTest.randomString(10)
-        fio:      str  = UnitTest.randomString(20)
+        username: str  = self.randomString(10)
+        fio:      str  = self.randomString(20)
         pas            = Pas(id,username,fio)
         print(pas.__dict__)
         assert pas.__dict__ == { 'id': pas.id, 'username': pas.username, 'fio': pas.fio}
 
-    def test_door_creation():
+    def test_door_creation(self):
         id:      UUID            = uuid4()
-        cab:     str             = UnitTest.randomString(10)
-        allowed: dict[str, Pas]  = UnitTest.randomPas(10)
+        cab:     str             = self.randomString(10)
+        allowed: dict[str, Pas]  = self.randomPas(10)
         door = Door(id,cab,allowed)
         print(door.__dict__)
         assert door.__dict__ == { 'id': door.id, 'cab': door.cab, 'allowed': door.allowed}

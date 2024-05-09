@@ -75,7 +75,7 @@ class SKUD_Service:
             self.skud.doors.get(door1).status = False
 
     def check(self, door1, pas1):  # Поменять состояние двери, если пропуск подходит
-        with open("methods_calls.log", "a") as f:
+        with open(f"SKUD_{datetime.date}", "a+") as f:
             f.write(
                 f"{datetime.datetime.now()} pass:{pas1} is tried to get access to the door:{door1}"
             )

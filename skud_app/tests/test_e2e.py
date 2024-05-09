@@ -10,7 +10,7 @@ from skud_app.models import *
 from skud_app.views import SKUDViewSet, SKUD_Service
 
 
-class E2ETests:
+class test_e2e:
 
     req: json = {
         "skud_id": "0",
@@ -38,9 +38,9 @@ class E2ETests:
         },
     }
 
-    def test_pass_creation(req):
+    def test_pass_creation(self, req):
         SKUDViewSet.skudView.add_pass(req)
-        pas = E2ETests.skudView.skudServ.skud.passes.get(req.get("Pass").get("id"))
+        pas = self.skudView.skudServ.skud.passes.get(req.get("Pass").get("id"))
         print(pas.__dict__)
         assert pas.__dict__ == {
             "id": req.get("Pass").id,
@@ -48,9 +48,9 @@ class E2ETests:
             "fio": req.get("Pass").fio,
         }
 
-    def test_door_creation(req):
+    def test_door_creation(self, req):
         SKUDViewSet.skudView.add_door(req)
-        pas = E2ETests.skudView.skudServ.skud.doors.get(req.get("Door").get("id"))
+        pas = self.skudView.skudServ.skud.doors.get(req.get("Door").get("id"))
         print(pas.__dict__)
         assert pas.__dict__ == {
             "id": req.get("Door").id,

@@ -1,5 +1,8 @@
 import os
+import sys
 
 
-os.environ.update({'DJANGO_SETTINGS_MODULE': '\skud\skud_app\skud\settings.py'})
-os.environ.update({'PYTHONPATH': '\skud\skud_app'}) 
+sys.path.append(os.getcwd())
+
+os.environ.update({'DJANGO_SETTINGS_MODULE': 'skud.settings'})
+# os.environ.update({'PYTHONPATH': '\skud\skud_app'}) 
