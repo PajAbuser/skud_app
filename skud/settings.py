@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
                  '127.0.0.1',
+                 'localhost',
                  '0.tcp.eu.ngrok.io',
                  '1.tcp.eu.ngrok.io',
                  '2.tcp.eu.ngrok.io',
@@ -38,7 +39,8 @@ ALLOWED_HOSTS = [
                  '8.tcp.eu.ngrok.io',
                  '9.tcp.eu.ngrok.io',
                  'd896-79-139-211-69.ngrok-free.app',
-                 'e9ce-79-139-211-69.ngrok-free.app'
+                 'e9ce-79-139-211-69.ngrok-free.app',
+                 'bd73-79-139-211-69.ngrok-free.app'
                  ]
 
 

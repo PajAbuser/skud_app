@@ -7,36 +7,46 @@ class SKUD_Service:
 
     skud: SKUD = SKUD({}, {})
 
-    passes_n: Pas = []
-    doors_n: Door = []
-
-    def log(self):
-        self.skud.log()
+    passes_n: Pas  = []
+    doors_n : Door = []
+    
+    def repr_passes_n(self):
+        if not self.passes_n: return 'No passes is SKUD yet\n'
+        s = '\npasses sub-id: '
+        for i in range(len(self.passes_n)):
+            s += f"{i}: {self.passes_n[i]} "
+        return s
+    
+    def repr_doors_n(self):
+        if not self.doors_n: return 'No doors is SKUD yet\n'
+        s = '\n doors sub-id: '
+        for i in range(len(self.doors_n )):
+            s += f"{i}: {self.doors_n [i]} "
+        return s
+    
+    def __repr__(self):
+        s = str(self.skud) + self.repr_passes_n() + self.repr_doors_n()
+        return s
 
     def add(self, obj):  # Добавление пропуска или двери в СКУД
+        # print('entered add:\n', obj)
         if type(obj) == Door:
             if not self.skud.doors.get(obj.id):
                 self.skud.doors.update({obj.id: obj})
                 self.doors_n.append(obj.id)
+            for pas in obj.allowed.values():
+                if not self.skud.passes.get(pas.id):
+                    self.skud.passes.update({pas.id: pas})
+                    self.passes_n.append(pas.id)
         elif type(obj) == Pas:
             if not self.skud.passes.get(obj.id):
                 self.skud.passes.update({obj.id: obj})
                 self.passes_n.append(obj.id)
-            else:
-                return HttpResponse(
-                    content={"message": f"{type(obj)} is already in SKUD"}
-                )
-        else:
-            return HttpResponse(
-                content={"message": f"for {type(obj)} type there is no storage in SKUD"}
-            )
 
     def reg(self, door1, pas1):  # Зарегистрировать пропуск для открытия двери
+        self.add(door1)
+        self.add(pas1)
         if type(door1) == Door and type(pas1) == Pas:
-
-            if not self.skud.doors.get(door1.id):
-                self.skud.doors.update({door1.id: door1})
-            elif not door1.allowed.get(pas1.id):
                 door1.allowed.update({pas1.id: pas1})
 
     def rem(self, door1, pas1):  # Удалить регистрацию пропуска
@@ -100,12 +110,15 @@ class SKUD_Service:
             else:
                 return HttpResponse(content="Invalid pass")
 
-    def logs(self):
-        f = open("filename.txt")
-        for line in self.skud.history:
-            f.write(f"{line}\n")
-        f.close()
-
+    def repr_passes_of_door(self, id):
+        s = "\n"
+        door = self.doors.get(self.doors_n[id])
+        for pas in list(door.allowed.values()):
+            for i in range(len(self.passes_n)):
+                if pas.id == self.passes_n[i]:
+                    s += f"{i}: {str(pas)}"
+        return s
+    
     def edit(self, cab, id):
         self.cab = cab
         self.id = id

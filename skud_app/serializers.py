@@ -1,36 +1,73 @@
+import json
 import uuid
+from django.http import HttpResponse, JsonResponse, FileResponse, HttpRequest
 from rest_framework import serializers
 from skud_app.models import *
 
 
-class pasSerializer(serializers.Serializer):
-
-    UUID = serializers.UUIDField()
+class PasSerializer(serializers.Serializer):
+    
+    UUID     = serializers.UUIDField()
     username = serializers.CharField(max_length=100)
-    fio = serializers.CharField(max_length=100)
+    fio      = serializers.CharField(max_length=100)
 
     def create(self) -> Pas:
-        return Pas(self.data)
+        pas = Pas(self.validated_data)
+        return pas
 
 
-class doorSerializer(serializers.Serializer):
+class PasDictSerializer(serializers.Serializer):
+    
+    passes = PasSerializer(many=True)
 
-    UUID = serializers.UUIDField()
-    cab = serializers.CharField(max_length=100)
-    allowed = serializers.DictField()
+    def create(self):
+        passes = []
+        for pas_data in self.data['passes']:
+            pas_serializer = PasSerializer(data=pas_data)
+            pas_serializer.is_valid()
+            pas = pas_serializer.create()
+            passes.append(pas)
+        return passes
+
+
+class DoorSerializer(PasDictSerializer):
+    
+    id     = serializers.UUIDField   ()
+    cab    = serializers.CharField   (max_length=100)
     status = serializers.BooleanField()
 
-    def create(self) -> Door:
-        return Door(self.data)
+    def create(self):
+        validated_data = self.validated_data
+        pas = PasDictSerializer(data=self.validated_data)
+        pas.is_valid()
+        allowed = pas.create()
+        validated_data.update({'passes':allowed})
+        door = Door(validated_data)
+        return door
 
 
-class SKUDSerializer(serializers.Serializer):
-    history = serializers.FileField()
-    passes = serializers.DictField()
-    doors = serializers.DictField()
+class DoorDictSerializer(serializers.Serializer):
+    
+    doors = DoorSerializer(many=True)
+    
+    def create(self):
+        doors = []
+        for door_data in self.validated_data['doors']:
+            door_serializer = DoorSerializer(data=door_data)
+            door_serializer.is_valid()
+            door = door_serializer.create()
+            doors.append(door)
+        return doors
+
+
+class SKUDSerializer(PasDictSerializer, DoorDictSerializer):
+    
+    class Meta:
+        inherit = False
 
 
 class OperationSerializer(serializers.Serializer):
-    id = serializers.UUIDField()
-    done = serializers.BooleanField()
-    result = serializers.JSONField(default={})
+    
+    id     = serializers.UUIDField   ()
+    done   = serializers.BooleanField()
+    result = serializers.JSONField   (default={})

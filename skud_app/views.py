@@ -10,7 +10,7 @@ from skud_app.serializers import *
 from rest_framework.viewsets import ViewSet
 from skud_app.services.SKUD_Service import SKUD_Service
 from rest_framework.parsers import JSONParser
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiParameter
 from rest_framework.decorators import action
 import django.core.serializers.json as json_serializer
 import functools
@@ -21,43 +21,85 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import viewsets
+from drf_yasg import openapi
        
-def log_method_calls(cls):
+def log_calls(file_name):
+    def decorator(cls):
+        for name, func in vars(cls).items():
+            if callable(func):
+                setattr(cls, name, log_call(file_name)(func))
+        return cls
+    return decorator
 
-    class_name = cls.__name__
+def log_call(file_name):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            with open(file_name, 'a') as f:
+                f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(func.__name__)} with args {'{:>80}'.format(repr(args[0]))} and keywords {repr(kwargs)} through {'localhost' if args[0].META.get('HTTP_X_FORWARDED_FOR') == None else args[0].META.get('HTTP_X_FORWARDED_FOR')}\n")
+            res = func(self, *args, **kwargs)
+            print(self.skudServ)
+            return res
+        return wrapper
+    return decorator
 
-    for name, method in cls.__dict__.items():
-        if callable(method):
-            @functools.wraps(method)
-            def wrapper(self, *args, **kwargs):
-                if len(args) > 0: req  = args[0]
-                else: req = args
-                # with open(os.path.join(os.path.dirname(__file__), 'logs', 'method_calls.log'), 'a+') as f:
-                with open("method_calls.log", 'a+') as f:
-                    f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(method.__name__)} with args {repr(args)} and keywords {repr(kwargs)}")
-                    if type(req) == request.Request:
-                        f.write(f" from {req.META.get('REMOTE_ADDR')} through {'localhost' if req.META.get('HTTP_X_FORWARDED_FOR') == None else req.META.get('HTTP_X_FORWARDED_FOR')}" + '\n')
-                    else: f.write(f"\n")
-
-                return method(self, *args, **kwargs)
-
-            setattr(cls, name, wrapper)
-
-    return cls
+'''
+example_req = OpenApiExample(
+            'Valid example 1',
+            summary='short summary',
+            description='longer description',
+            value={
+                "skud_id": "0",
+                "Pass":
+                    {
+                        "UUID": "1e9c920e-934d-4259-964c-e67f83742176",
+                        "username": "user1",
+                        "fio": "Иванов Иван Иванович"
+                    },
+                "Door": {
+                "UUID": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+                "cab": "101",
+                "status" : True,
+                "allowed":
+                    {
+                        "1e9c920e-934d-4259-964c-e67f83742176":
+                        {
+                            "UUID": "1e9c920e-934d-4259-964c-e67f83742176",
+                            "username": "user1",
+                            "fio": "Лаптев Иван Александрович"
+                        },
+                        "8d2938e2-bc10-410e-a72a-96e63f321984": {
+                            "UUID": "8d2938e2-bc10-410e-a72a-96e63f321984",
+                            "username": "Paj",
+                            "fio": "sfa"
+                        }
+                    }
+                }
+            },
+            request_only=True, # signal that example only applies to requests
+            response_only=True, # signal that example only applies to responses
+        )
+'''
 
 @extend_schema_view(
-add_pass          =extend_schema(summary='Add new pass to SKUD'           , request=HttpRequest),
-repr_pass         =extend_schema(summary='Represent pass in SKUD'         , request=HttpRequest),
-repr_passes       =extend_schema(summary='Represent all pass in SKUD'     , request=HttpRequest),
-add_door          =extend_schema(summary='Add new door to SKUD'           , request=HttpRequest),
-repr_door         =extend_schema(summary='Represent door in SKUD'         , request=HttpRequest),
-repr_doors        =extend_schema(summary='Represent all door in SKUD'     , request=HttpRequest),
-add_door_pass     =extend_schema(summary='Add pass to door & SKUD if none', request=HttpRequest),
-remove_pass       =extend_schema(summary='Remove pass from door'          , request=HttpRequest),
-export            =extend_schema(summary='Get log by operation id'        , request=HttpRequest),
-export_logs_infile=extend_schema(summary='Get logs exported in file'      , request=HttpRequest),
+add_pass          =extend_schema(summary='Add new pass(es) to SKUD'                 , request=PasDictSerializer  , responses=SKUDSerializer),
+repr_pass         =extend_schema(summary='Represent pass in SKUD'                                                , responses=SKUDSerializer),
+repr_passes       =extend_schema(summary='Represent all pass in SKUD'                                            , responses=SKUDSerializer),
+repr_passes_door  =extend_schema(summary='Returns all registered passes in door'    , request=OperationSerializer, responses=SKUDSerializer),
+add_door          =extend_schema(summary='Add new door(s) to SKUD'                  , request=DoorDictSerializer , responses=SKUDSerializer),
+repr_door         =extend_schema(summary='Represent door in SKUD'                                                , responses=SKUDSerializer),
+repr_doors        =extend_schema(summary='Represent all door in SKUD'                                            , responses=SKUDSerializer),
+add_door_pass     =extend_schema(summary='Add pass(es) to door & SKUD if none'      , request=PasDictSerializer  , responses=SKUDSerializer),
+remove_passes     =extend_schema(summary='Remove pass(es) from door'                , request=PasDictSerializer  , responses=SKUDSerializer),
+remove_pass       =extend_schema(summary='Remove pass from door by their sub-id'    , request=PasDictSerializer  , responses=SKUDSerializer),
+export            =extend_schema(summary='Get log by operation id'                  , request=OperationSerializer, responses=SKUDSerializer),
+export_logs       =extend_schema(summary='Long-running operation for exporting logs', request=OperationSerializer, responses=SKUDSerializer),
+export_logs_infile=extend_schema(summary='Get logs exported in file'                , request=OperationSerializer, responses=SKUDSerializer),
+check1            =extend_schema(summary='Checks if pass is registered in door'     , request=OperationSerializer, responses=SKUDSerializer),
+check2            =extend_schema(summary='Checks if pass is registered in door'     , request=OperationSerializer, responses=SKUDSerializer),
+
 )
-@log_method_calls
+@log_calls("method_calls.log")
 class SKUDViewSet(ViewSet):
     serializer_class = SKUDSerializer
     
@@ -90,103 +132,103 @@ class SKUDViewSet(ViewSet):
         # print("ended operation - ",self.opServ.get_operation(operation_id))
 
     @action(detail=True, methods=['post'])
-    def add_pass(self, request): 
-        if type(request) == HttpRequest:
-            data: dict = json.loads(request.body)
-            doorDict = data.get('Door')
-            serializer = pasSerializer(data=doorDict)
-            print("validated" if serializer.is_valid() else "non-valid", f"pass_id={doorDict.get('UUID')} pass.data")
-            pas = serializer.create()
-            self.skudServ.add(pas)
-            return HttpResponse(content=f"sozdan pass: {self.skudServ.skud.passes.get(pas.id)}")
-        elif type(request) == dict:
-            serializer = pasSerializer(data=request)
-            print("validated" if serializer.is_valid() else "non-valid", f"pass_id={request.get('UUID')} pass.data")
-            pas = serializer.create()
-            self.skudServ.add(pas)
+    def add_pass(self, request):     
+            req = dict(json.loads(request.body))
+            pas = PasDictSerializer(data=req)
+            print('pas.is_valid() =', pas.is_valid())
+            for p in pas.create(): self.skudServ.add(p)
+            return Response(data=f"{self.skudServ.skud}")
 
     @action(detail=True, methods=['get'], url_path='passes/<int:id>')
     def repr_pass(self, request, id):
         if len(self.skudServ.passes_n) > id:
-            return HttpResponse(content=f"{self.skudServ.skud.passes.get(self.skudServ.passes_n[id])}")
-        else: return HttpResponse(content="No such pass")
+            return Response(data=f"{self.skudServ.skud.passes.get(self.skudServ.passes_n[id])}")
+        else: 
+            return Response(data="No such pass")
 
     @action(detail=False, methods=['get'], url_path='passes/')
     def repr_passes(self, request):
-        return HttpResponse(content=f"{self.skudServ.skud.passes}")
+        return Response(data=f"{self.skudServ.repr_passes_n()}")
+        
+    @action(detail=True, methods=['get'], url_path='doors/<int:id>/passes/') 
+    def repr_passes_door(self, request, id):
+        return Response(data=self.skudServ.repr_passes_of_door(id))
         
     @action(detail=True, methods=['post'])
     def add_door(self, request:HttpRequest):
-        data: dict = json.loads(request.body)
-        doorDict = data.get('Door')
-        if (doorDict.get('allowed') != {}):
-            for p in dict(doorDict.get('allowed')).values():
-                self.add_pass(p)
-        serializer = doorSerializer(data=doorDict)
-        print("validated" if serializer.is_valid() else "non-valid", f"door_id={doorDict.get('UUID')} door.data")
-        door = serializer.create()
-        self.skudServ.add(door)
-        return HttpResponse(content=f"sozdan door: {door}")
+        req = json.loads(request.body)
+        door = DoorDictSerializer(data=req)
+        print('door.is_valid() =',door.is_valid())
+        if (type(door.create()) == list): 
+            for d in door.create(): self.skudServ.add(d)
+        else: self.skudServ.add(door.create())
+        return Response(data=f"{self.skudServ.skud}")
     
     @action(detail=True, methods=['get'], url_path='doors/<int:id>')
     def repr_door(self, request, id):
         if len(self.skudServ.doors_n) > id:
-            return HttpResponse(content=f"{self.skudServ.skud.doors.get(self.skudServ.doors_n[id])}")
-        else: return HttpResponse(content="No such pass")
+            return Response(data=f"{self.skudServ.skud.doors.get(self.skudServ.doors_n[id])}")
+        else:
+            return Response(data="No such door")
 
     @action(detail=False, methods=['get'], url_path='doors/')
     def repr_doors(self, request):
-        return HttpResponse(content=f"{self.skudServ.skud.doors}")
+        return Response(data=f"{self.skudServ.skud.doors}")
 
     @action(detail=True, methods=['post'], url_path='doors/<int:id>/passes')
     def add_door_pass(self, request, id):
         data: dict = json.loads(request.body)
-        door1 = self.skudServ.skud.doors.get(id)
-        if door1 == None:
-            self.add_door(request)
-        pass1 = self.skudServ.skud.passes.get(data.get('Pass').get('UUID'))
-        if pass1 == None:
-            self.add_pass(request)
-        self.skudServ.reg(door1,pass1)
-        return HttpResponse(content=f"pass {pass1} is \
-            added to door {self.skudServ.skud.doors.get(data.get('Door').get('UUID'))}")
+        pas = PasDictSerializer(data=data)
+        pas.is_valid()
+        door = self.skudServ.skud.doors.get(self.skudServ.doors_n[id])
+        sp = ""
+        if type(pas.create()) == list:
+            for p in pas.create():
+                self.skudServ.reg(door,p)
+                sp += ("" if sp == "" else ", ") + str(p.id)
+            return Response(data=f"passes [{sp}] is added to door {door.id}")
+        else: self.skudServ.reg(door,pas.create())
+        return Response(data=f"pass {pas.create()} is added to door {door.id}")
 
     @action(detail=True, methods=['delete'], url_path='doors/<int:id>/passes')
     def remove_passes(self, request):
         data: dict = json.loads(request.body)
-        door = self.skudServ.skud.doors.get(data.get("Door").get('UUID'))
+        door = self.skudServ.skud.doors.get(data.get('door').get('UUID'))
         for pas in data.get("Passes"):
             self.skudServ.rem(door, pas)
         self.repr_door(door)
+        return Response(data=f"{self.skudServ.skud}")
 
     @action(detail=True, methods=['delete'], url_path='doors/<int:door_id>/passes/<int:pass_id>')
-    def remove_pass(self, door_id: int, pass_id: int):
-        self.skudServ.skud.doors.get(self.skudServ.doors_n[door_id]).allowed.popitem(self.skudServ.skud.passes.get(self.skudServ.passes_n[pass_id]))
+    def remove_pass(self, request, door_id: int, pass_id: int):
+        self.skudServ.skud.doors.get(self.skudServ.doors_n[door_id]).allowed.pop(self.skudServ.passes_n[pass_id])
+        return Response(data=f"{self.skudServ.skud}")
 
     @action(detail=True, methods=['post'], url_path='check/')
     def check1(self, request):
         data: dict = json.loads(request.body)
-        door1 = self.skudServ.skud.doors.get(data.get("Door").get('UUID'))
+        door1 = self.skudServ.skud.doors.get(data.get('doors').get('UUID'))
         if door1 == None:
             self.add_door(request)
-        pass1 = self.skudServ.skud.passes.get(data.get('Pass').get('UUID'))
+            door1 = self.skudServ.skud.doors.get(data.get('doors').get('UUID'))
+        pass1 = self.skudServ.skud.passes.get(data.get('passes').get('UUID'))
         if pass1 == None:
             self.add_pass(request)
-        return self.skudServ.check(door1,pass1)
+            pass1 = self.skudServ.skud.passes.get(data.get('passes').get('UUID'))
+        return Response(data=f"{self.skudServ.check(door1,pass1)}")
 
     @action(detail=True, methods=['get'], url_path='check/<int:door_id>/<int:pass_id>')
-    def check2(self, door_id:int, pass_id:int):
-        data: dict = json.loads(request.body)
+    def check2(self, request, door_id:int, pass_id:int):
         door1 = self.skudServ.doors_n[door_id]
         pass1 = self.skudServ.passes_n[pass_id]
         self.skudServ.check(door1,pass1)
-        return HttpResponse(content=f"pass {pass1} is valid to door {door1}")
+        return Response(data=f"pass {pass1} is valid to door {door1}")
         
         
         
 
 @extend_schema_view(
-    getOperation=extend_schema(summary='Get information about operation', responses=OperationSerializer, auth=False)
+    getOperation=extend_schema(summary='Get information about operation', request=OperationSerializer, responses=OperationSerializer)
 )
 class OperationViewSet(ViewSet):
     
