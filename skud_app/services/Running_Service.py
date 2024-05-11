@@ -12,6 +12,7 @@ class OperationsService:
     def create_operation(self) -> UUID:
         id = uuid4()
         self.operations[id] = Operation(id)
+        print(f"operation {id} created")
         return id
 
     def finish_operation(self, id: UUID, result):
@@ -19,6 +20,7 @@ class OperationsService:
             return HttpResponseNotFound
         self.operations[id].result = result
         self.operations[id].done = True
+        print(f"operation {id} is finished")
 
     def get_operation(self, id: UUID) -> Operation:
         if not id in self.operations:

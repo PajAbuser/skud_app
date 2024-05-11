@@ -36,50 +36,15 @@ def log_call(file_name):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             with open(file_name, 'a') as f:
-                f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(func.__name__)} with args {'{:>80}'.format(repr(args[0]))} and keywords {repr(kwargs)} through {'localhost' if args[0].META.get('HTTP_X_FORWARDED_FOR') == None else args[0].META.get('HTTP_X_FORWARDED_FOR')}\n")
+                f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(func.__name__)} with args {'{:>90}'.format(repr(args[0]))} and keywords {repr(kwargs)}")
+                try:
+                    f.write(f"through {'localhost' if args[0].META.get('HTTP_X_FORWARDED_FOR') == None else args[0].META.get('HTTP_X_FORWARDED_FOR')} \n")
+                except Exception: pass
             res = func(self, *args, **kwargs)
             print(self.skudServ)
             return res
         return wrapper
     return decorator
-
-'''
-example_req = OpenApiExample(
-            'Valid example 1',
-            summary='short summary',
-            description='longer description',
-            value={
-                "skud_id": "0",
-                "Pass":
-                    {
-                        "UUID": "1e9c920e-934d-4259-964c-e67f83742176",
-                        "username": "user1",
-                        "fio": "Иванов Иван Иванович"
-                    },
-                "Door": {
-                "UUID": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-                "cab": "101",
-                "status" : True,
-                "allowed":
-                    {
-                        "1e9c920e-934d-4259-964c-e67f83742176":
-                        {
-                            "UUID": "1e9c920e-934d-4259-964c-e67f83742176",
-                            "username": "user1",
-                            "fio": "Лаптев Иван Александрович"
-                        },
-                        "8d2938e2-bc10-410e-a72a-96e63f321984": {
-                            "UUID": "8d2938e2-bc10-410e-a72a-96e63f321984",
-                            "username": "Paj",
-                            "fio": "sfa"
-                        }
-                    }
-                }
-            },
-            request_only=True, # signal that example only applies to requests
-            response_only=True, # signal that example only applies to responses
-        )
-'''
 
 @extend_schema_view(
 add_pass          =extend_schema(summary='Add new pass(es) to SKUD'                 , request=PasDictSerializer  , responses=SKUDSerializer),
@@ -122,11 +87,7 @@ class SKUDViewSet(ViewSet):
 
     @action(detail=False)
     def export_logs_infile(self, operation_id:UUID):
-        name = "" + f"{str(datetime.datetime.now()).replace(' ','-').replace(':','-').replace('.','-')}.log"
-        with open(name, 'w+') as f:
-            with open(f"method_calls.log", 'r') as logs:
-                for l in logs:
-                    f.write(l)
+        name = "method_calls.log"
         self.opServ.finish_operation(operation_id, name)
         
         # print("ended operation - ",self.opServ.get_operation(operation_id))

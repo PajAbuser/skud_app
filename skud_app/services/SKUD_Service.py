@@ -112,7 +112,7 @@ class SKUD_Service:
 
     def repr_passes_of_door(self, id):
         s = "\n"
-        door = self.doors.get(self.doors_n[id])
+        door = self.skud.doors.get(self.doors_n[id])
         for pas in list(door.allowed.values()):
             for i in range(len(self.passes_n)):
                 if pas.id == self.passes_n[i]:
