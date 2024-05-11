@@ -5,7 +5,7 @@ import random
 import math
 from uuid import uuid4
 from datetime import datetime
-from skud_app.models import *
+from ..skud_app.models import *
 # from services.SKUD_Service import *
 
 

@@ -1,4 +1,5 @@
 method_calls.log
 /logs
 **/__pycache__
+**/.pytest_cache
 2024-*

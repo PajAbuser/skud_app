@@ -6,8 +6,8 @@ import random
 import math
 from uuid import uuid4
 from datetime import datetime
-from skud_app.models import *
-from skud_app.views import SKUDViewSet, SKUD_Service
+from ..skud_app.models import *
+from ..skud_app.views import SKUDViewSet, SKUD_Service
 
 
 class test_e2e:
