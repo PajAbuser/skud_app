@@ -9,7 +9,7 @@ from ..skud_app.models import *
 # from services.SKUD_Service import *
 
 
-class test_unit:
+class unit:
     @staticmethod
     def randomString(self, length:int) -> str:
         # for (i = 0, i < length, i++):

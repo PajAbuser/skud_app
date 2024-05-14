@@ -3,3 +3,4 @@ method_calls.log
 **/__pycache__
 **/.pytest_cache
 2024-*
+venv

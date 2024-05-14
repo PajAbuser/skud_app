@@ -21,7 +21,6 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import viewsets
-from drf_yasg import openapi
        
 def log_calls(file_name):
     def decorator(cls):
