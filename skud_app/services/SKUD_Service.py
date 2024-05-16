@@ -12,14 +12,14 @@ class SKUD_Service:
     
     def repr_passes_n(self):
         if not self.passes_n: return 'No passes is SKUD yet\n'
-        s = '\npasses sub-id: '
+        s = '\npasses sub-id:\n'
         for i in range(len(self.passes_n)):
             s += f"{i}: {self.passes_n[i]} "
         return s
     
     def repr_doors_n(self):
         if not self.doors_n: return 'No doors is SKUD yet\n'
-        s = '\n doors sub-id: '
+        s = '\n doors sub-id:\n'
         for i in range(len(self.doors_n )):
             s += f"{i}: {self.doors_n [i]} "
         return s
@@ -34,7 +34,7 @@ class SKUD_Service:
             if not self.skud.doors.get(obj.id):
                 self.skud.doors.update({obj.id: obj})
                 self.doors_n.append(obj.id)
-            for pas in obj.allowed.values():
+            for pas in obj.passes.values():
                 if not self.skud.passes.get(pas.id):
                     self.skud.passes.update({pas.id: pas})
                     self.passes_n.append(pas.id)
@@ -47,15 +47,15 @@ class SKUD_Service:
         self.add(door1)
         self.add(pas1)
         if type(door1) == Door and type(pas1) == Pas:
-                door1.allowed.update({pas1.id: pas1})
+                door1.passes.update({pas1.id: pas1})
 
     def rem(self, door1, pas1):  # Удалить регистрацию пропуска
         if type(door1) == Door and type(pas1) == Pas:
-            door1.allowed.popitem(pas1)
+            door1.passes.popitem(pas1)
         elif type(door1) == str and type(pas1) == str:
             if self.skud.doors.get(door1) == None:
                 return HttpResponse(content=f"no such door in SKUD")
-            if self.skud.doors.get(door1).allowed.get(pas1) == None:
+            if self.skud.doors.get(door1).passes.get(pas1) == None:
                 if self.skud.passes.get(pas1) == None:
                     return HttpResponse(content=f"no such pass in SKUD")
                 else:
@@ -63,14 +63,14 @@ class SKUD_Service:
                         content=f"this pass {self.skud.passes.get(pas1)} is not registered in door {self.skud.doors.get(door1)}"
                     )
             else:
-                self.skud.doors.get(door1).allowed.popitem(pas1)
+                self.skud.doors.get(door1).passes.popitem(pas1)
         return HttpResponse(content=f"pass succesfully removed from door")
 
     def valid(self, door1, pas1) -> bool:  # Проверить, подходит ли пропус
         if type(door1) == Door and type(pas1) == Pas:
-            return bool(door1.allowed.get(pas1))
+            return bool(door1.passes.get(pas1))
         elif type(door1) == str and type(pas1) == str:
-            return self.skud.doors.get(door1).allowed.get(pas1.id)
+            return self.skud.doors.get(door1).passes.get(pas1.id)
 
     def unlock(self, door1):  # Открыть дверь
         if type(door1) == Door:
@@ -113,7 +113,7 @@ class SKUD_Service:
     def repr_passes_of_door(self, id):
         s = "\n"
         door = self.skud.doors.get(self.doors_n[id])
-        for pas in list(door.allowed.values()):
+        for pas in list(door.passes.values()):
             for i in range(len(self.passes_n)):
                 if pas.id == self.passes_n[i]:
                     s += f"{i}: {str(pas)}"

@@ -1,3 +1,4 @@
+import json
 from django.db import models
 from uuid import UUID
 
@@ -9,54 +10,59 @@ class Pas:
     fio:      str
 
     def __init__(self, *params, json=None) -> None:
-        if json != None:
-            self.username = json.get("username")
-            self.fio = json.get("fio")
-            self.id = json.get("UUID")
-            return None
         if type(params) == tuple:
             params        = dict(params[0])
             self.username = params.get("username")
             self.fio      = params.get("fio")
-            self.id       = params.get("UUID")
+            self.id       = str(params.get("id"))
 
     def __repr__(self) -> str:
         return (
             "pas object = {"
-            + f"id: {str(self.id)}, username: {self.username}, fio: {self.fio}"
+            + f"id: {self.id}, username: {self.username}, fio: {self.fio}"
             + "}"
         )
-
+        
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'username': self.username,
+            'fio': self.fio
+        }
 
 class Door:
 
     id:      UUID
     cab:     str
-    allowed: dict[UUID, Pas]
+    passes: dict[UUID, Pas]
     status:  bool  # False - open, True - closed
 
     def __init__(self, *params, json=None) -> None:
-        self.allowed = {"0": None}
-        self.allowed.popitem()
-        if json != None:
-            self.cab     = json.get("cab")
-            self.id      = json.get("UUID")
-            self.allowed = json.get("passes")
-            return None
+        self.passes = {"0": None}
+        self.passes.popitem()
         if type(params) == tuple:
             params   = dict(params[0])
             self.cab = params.get("cab")
-            self.id  = params.get("id")
+            self.id  = str(params.get("id"))
             if params.get("passes") != []: 
-                for p in (params.get("passes")): self.allowed[p.id] = p 
-            else: self.allowed = []
+                for p in (params.get("passes")): self.passes[p.id] = p 
+            else: self.passes = []
             self.status = params.get("status")
 
     def __repr__(self) -> str:
         return (
             "door object = {"+f"id: {self.id}, cab: {self.cab}, status: {self.status},\n" +
-            "    allowed_passes: {" + f'\n' + ",\n".join(f"        {key}: {value}" for key, value in self.allowed.items()) + f'\n' + "    }"
+            "    allowed_passes: {" + f'\n' + ",\n".join(f"        {key}: {value}" for key, value in self.passes.items()) + f'\n' + "    }"
         )
+        
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'cab': self.cab,
+            'passes': [p.to_dict() for p in self.passes.values()],
+            'status': self.status
+        }
+        
 
 
 class SKUD:
@@ -66,13 +72,20 @@ class SKUD:
 
     def __init__(self, doors: dict[str, Door], passes: dict[str, Pas], *args, **kwargs):
         self.doors = doors
-        self.allowed = passes
+        self.passes = passes
         self.history = open("method_calls.log", "a")
 
     def __repr__(self) -> str:
-        return  "\nSKUD passes: {" + f'\n' + ",\n".join(f"    {key}: {value}" for key, value in self.passes.items()) + f'\n' + "}\n" + \
-                 "\nSKUD doors: {" + f'\n' + ",\n".join(f"    {key}: {value}" for key, value in self.doors .items()) + "\n}\n"
-
+        return "\nSKUD_passes: {" + f'\n' + ",\n".join(f"    {key}: {value}" for key, value in self.passes.items()) + f'\n' + "}\n" + \
+                 "\nSKUD_doors: {" + f'\n' + ",\n".join(f"    {key}: {value}" for key, value in self.doors .items()) + "\n}\n"
+                 
+    def export(self):
+        listp = [p.to_dict() for p in self.passes.values()]
+        listd = [d.to_dict() for d in self.doors.values()]
+        return {
+            'passes': listp,
+            'doors': listd
+        }
 
 class Operation:
 

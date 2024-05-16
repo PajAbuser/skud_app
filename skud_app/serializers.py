@@ -7,7 +7,7 @@ from skud_app.models import *
 
 class PasSerializer(serializers.Serializer):
     
-    UUID     = serializers.UUIDField()
+    id       = serializers.UUIDField()
     username = serializers.CharField(max_length=100)
     fio      = serializers.CharField(max_length=100)
 
@@ -34,14 +34,14 @@ class DoorSerializer(PasDictSerializer):
     
     id     = serializers.UUIDField   ()
     cab    = serializers.CharField   (max_length=100)
-    status = serializers.BooleanField()
+    status = serializers.BooleanField(default=True)
 
     def create(self):
         validated_data = self.validated_data
         pas = PasDictSerializer(data=self.validated_data)
-        pas.is_valid()
-        allowed = pas.create()
-        validated_data.update({'passes':allowed})
+        print('pas.is_valid() =', pas.is_valid())
+        passes = pas.create()
+        validated_data.update({'passes':passes})
         door = Door(validated_data)
         return door
 
