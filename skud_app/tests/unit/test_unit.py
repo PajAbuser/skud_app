@@ -9,7 +9,6 @@ from skud_app.models import *
 from skud_app.serializers import *
 # from services.SKUD_Service import *
 
-@pytest.mark.django_db
 class TestUnit:
     
     @staticmethod
@@ -32,14 +31,17 @@ class TestUnit:
             passes.update({id:pasSer.create()})
         return passes
 
-    # def test_pass_creation(self):
-    #     id:       str  = str(uuid4())
-    #     username: str  = self.randomString(10)
-    #     fio:      str  = self.randomString(20)
-    #     pasSer = PasSerializer(data={'id':id,'username':username,'fio':fio})
-    #     pasSer.is_valid()
-    #     pas = pasSer.create()
-    #     assert pas.__dict__ == { 'id': pas.id, 'username': pas.username, 'fio': pas.fio}
+    def test_fake(self):
+        assert 1 == 1
+        
+    def test_pass_creation(self):
+        id:       str  = str(uuid4())
+        username: str  = self.randomString(10)
+        fio:      str  = self.randomString(20)
+        pasSer = PasSerializer(data={'id':id,'username':username,'fio':fio})
+        pasSer.is_valid()
+        pas = pasSer.create()
+        assert pas.__dict__ == { 'id': pas.id, 'username': pas.username, 'fio': pas.fio}
 
     # def test_door_creation(self):
     #     id:     str            = str(uuid4())
