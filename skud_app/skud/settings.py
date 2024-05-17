@@ -26,21 +26,7 @@ SECRET_KEY = 'django-insecure-f$=a@oyf@e#4r2xjyrk%p$*c8^0&q6o8(@6d6d^q+#y2ikk7sh
 DEBUG = True
 
 ALLOWED_HOSTS = [
-                 '127.0.0.1',
-                 'localhost',
-                 '0.tcp.eu.ngrok.io',
-                 '1.tcp.eu.ngrok.io',
-                 '2.tcp.eu.ngrok.io',
-                 '3.tcp.eu.ngrok.io',
-                 '4.tcp.eu.ngrok.io',
-                 '5.tcp.eu.ngrok.io',
-                 '6.tcp.eu.ngrok.io',
-                 '7.tcp.eu.ngrok.io',
-                 '8.tcp.eu.ngrok.io',
-                 '9.tcp.eu.ngrok.io',
-                 'd896-79-139-211-69.ngrok-free.app',
-                 'e9ce-79-139-211-69.ngrok-free.app',
-                 'bd73-79-139-211-69.ngrok-free.app'
+                 '*'
                  ]
 
 
