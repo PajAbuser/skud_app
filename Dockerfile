@@ -11,5 +11,6 @@ COPY skud_app .
 
 RUN pip install gunicorn
 COPY entrypoint.sh .
+RUN chmod 777 ./entrypoint.sh
 
 ENTRYPOINT [ "./entrypoint.sh" ]
