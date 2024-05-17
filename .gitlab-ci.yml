@@ -30,7 +30,7 @@ build-prod-image:
     stage: build
     image: docker:dind
     script:
-        - docker build -f Dockerfile.prod -t skud_app:latest .
+        - docker build -f Dockerfile -t skud_app:latest .
         - docker save skud_app:latest > skud_app.tar
     needs:
         - run-unit-tests
