@@ -13,7 +13,7 @@ from django.http import HttpRequest
 import requests
 
 
-base_url = f'http://127.0.0.1:8000'
+base_url = f'http://127.0.0.1:8080'
 
 class TestE2e:
     
