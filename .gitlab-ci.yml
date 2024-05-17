@@ -63,10 +63,10 @@ push-to-yandex-registry:
         - docker load --input skud_app.tar
         - echo $YC_JSON_KEY | docker login -u json_key --password-stdin cr.yandex
     script:
-        - docker tag skud_app:latest cr.yandex/$CR_ID/skud_app:latest
-        - docker tag skud_app:latest cr.yandex/$CR_ID/skud_app:$CI_PIPELINE_IID
-        - docker push cr.yandex/$CR_ID/skud_app:latest
-        - docker push cr.yandex/$CR_ID/skud_app:$CI_PIPELINE_IID
+        - docker tag skud_app:latest cr.yandex/$YC_CR_ID/skud_app:latest
+        - docker tag skud_app:latest cr.yandex/$YC_CR_ID/skud_app:$CI_PIPELINE_IID
+        - docker push cr.yandex/$YC_CR_ID/skud_app:latest
+        - docker push cr.yandex/$YC_CR_ID/skud_app:$CI_PIPELINE_IID
     needs:
       - build-prod-image
 
@@ -85,7 +85,7 @@ deploy-to-yandex:
         - |
           /opt/yc/bin/yc serverless container revision deploy \
             --container-name $YC_CONTAINER_NAME \
-            --image cr.yandex/$CR_ID/skud_app:latest \
+            --image cr.yandex/$YC_CR_ID/skud_app:latest \
             --service-account-id $YC_SA_ID \
             --execution-timeout 30s \
             --cores 1 \
