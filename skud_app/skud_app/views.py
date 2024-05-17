@@ -155,7 +155,7 @@ class SKUDViewSet(ViewSet):
 
     @action(detail=True, methods=['delete'], url_path='doors/<int:door_id>/passes/<int:pass_id>')
     def remove_pass(self, request, door_id: int, pass_id: int):  # -> skud.export()
-        self.skudServ.skud.doors.get(self.skudServ.doors_n[door_id]).allowed.pop(self.skudServ.passes_n[pass_id])
+        self.skudServ.skud.doors.get(self.skudServ.doors_n[door_id]).passes.pop(self.skudServ.passes_n[pass_id])
         return Response(data=self.skudServ.skud.export())
 
     @action(detail=True, methods=['post'], url_path='check/')
