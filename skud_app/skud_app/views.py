@@ -35,9 +35,10 @@ def log_call(file_name):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             with open(file_name, 'a') as f:
-                f.write(f"<{datetime.datetime.now()}> Invoked method {'{:>16}'.format(func.__name__)} with args {'{:>90}'.format(repr(args[0]))} and keywords {repr(kwargs)}")
+                now_str = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+                f.write(f"<{now_str}> Invoked method {'{:>16}'.format(func.__name__)} with args {'{:>90}'.format(repr(args[0]))} and keywords {repr(kwargs)}")
                 try:
-                    f.write(f"through {'localhost' if args[0].META.get('HTTP_X_FORWARDED_FOR') == None else args[0].META.get('HTTP_X_FORWARDED_FOR')} \n")
+                    f.write(f" through {'localhost' if args[0].META.get('HTTP_X_FORWARDED_FOR') == None else args[0].META.get('HTTP_X_FORWARDED_FOR')} \n")
                 except Exception: pass
             res = func(self, *args, **kwargs)
             print(self.skudServ)
