@@ -7,51 +7,44 @@ from uuid import uuid4
 from datetime import datetime
 from skud_app.models import *
 from skud_app.serializers import *
-# from services.SKUD_Service import *
 
 
-class TestUnit:
+class TestUnit():
     
     @staticmethod
-    def randomString(length:int) -> str:
-        # for (i = 0, i < length, i++):
-        string = ""
-        for i in range(length):
-            string += chr(int(random.randrange(1,65)))
-        return string
-    
+    def randomString(length: int) -> str:
+        chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        return "".join(random.choice(chars) for _ in range(length))
+
     @staticmethod
-    def randomPas(length:int) -> Pas:
-        passes: dict[str,Pas] = {}
+    def randomPas(length: int) -> list[Pas]:
+        passes = []
         for i in range(length):
-            id:       str = str(uuid4())
-            username: str = TestUnit.randomString(10)
-            fio:      str = TestUnit.randomString(20)
-            pasSer = PasSerializer(data={'id':id,'username':username,'fio':fio})
-            pasSer.is_valid()
-            passes.update({id:pasSer.create()})
+            id = str(uuid4())
+            username = TestUnit.randomString(10)
+            fio = TestUnit.randomString(20)
+            pas = Pas({'id':id, 'username':username, 'fio':fio})
+            passes.append(pas)
         return passes
-
-    def test_fake(self):
-        assert 1 == 1
         
     def test_pass_creation(self):
-        id:       str = str(uuid4())
-        username: str = self.randomString(10)
-        fio:      str = self.randomString(20)
-        pasSer = PasSerializer(data={'id':id,'username':username,'fio':fio})
+        id = str(uuid4())
+        username = self.randomString(10)
+        fio = self.randomString(20)
+        pasSer = PasSerializer(data={'id': id, 'username': username, 'fio': fio})
         pasSer.is_valid()
         pas = pasSer.create()
-        assert pas.__dict__ == { 'id': pas.id, 'username': pas.username, 'fio': pas.fio}
+        assert pas.id == id
+        assert pas.username == username
+        assert pas.fio == fio
 
     # def test_door_creation(self):
-    #     id:     str            = str(uuid4())
-    #     cab:    str            = self.randomString(10)
-    #     passes: dict[str, Pas] = self.randomPas(10)
-    #     doorSer = DoorSerializer(data={'id':id,'cab':cab,'passes':passes, 'status':True})
+    #     id = str(uuid4())
+    #     cab = self.randomString(10)
+    #     passes = self.randomPas(10)
+    #     doorSer = DoorSerializer(data={'id': id, 'cab': cab, 'passes': passes, 'tatus': True})
     #     doorSer.is_valid()
     #     door = doorSer.create()
-    #     print(door.__dict__)
-    #     assert door.__dict__ == { 'id': door.id, 'cab': door.cab, 'passes': door.passes}
-
-    
+    #     assert door.id == id
+    #     assert door.cab == cab
+    #     assert door.passes == passes
