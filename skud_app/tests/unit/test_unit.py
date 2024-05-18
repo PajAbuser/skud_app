@@ -9,6 +9,7 @@ from skud_app.models import *
 from skud_app.serializers import *
 # from services.SKUD_Service import *
 
+
 class TestUnit:
     
     @staticmethod
@@ -23,9 +24,9 @@ class TestUnit:
     def randomPas(length:int) -> Pas:
         passes: dict[str,Pas] = {}
         for i in range(length):
-            id:       str  = str(uuid4())
-            username: str  = TestUnit.randomString(10)
-            fio:      str  = TestUnit.randomString(20)
+            id:       str = str(uuid4())
+            username: str = TestUnit.randomString(10)
+            fio:      str = TestUnit.randomString(20)
             pasSer = PasSerializer(data={'id':id,'username':username,'fio':fio})
             pasSer.is_valid()
             passes.update({id:pasSer.create()})
@@ -35,9 +36,9 @@ class TestUnit:
         assert 1 == 1
         
     def test_pass_creation(self):
-        id:       str  = str(uuid4())
-        username: str  = self.randomString(10)
-        fio:      str  = self.randomString(20)
+        id:       str = str(uuid4())
+        username: str = self.randomString(10)
+        fio:      str = self.randomString(20)
         pasSer = PasSerializer(data={'id':id,'username':username,'fio':fio})
         pasSer.is_valid()
         pas = pasSer.create()
